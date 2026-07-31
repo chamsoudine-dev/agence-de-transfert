@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.font-display {
+  font-family: "Poppins", sans-serif;
+}
+
+/* Conteneur qui simule un écran de téléphone sur desktop */
+.phone-frame {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: #fff;
+  position: relative;
+  box-shadow: 0 0 60px rgba(15, 44, 107, 0.12);
+}
+
+@media (min-width: 480px) {
+  .phone-frame {
+    min-height: 100vh;
+  }
+}
+
+input:focus {
+  outline: none;
+}
