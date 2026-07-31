@@ -46,4 +46,57 @@ router.post("/favorites", (req, res) => {
   res.status(201).json({ id: result.lastInsertRowid, label, phone, countryCode: countryCode || "+227" });
 });
 
+// GET /api/wallet/users -> Obtenir la liste de tous les comptes enregistrés
+router.get("/users", (req, res) => {
+  const users = db
+    .prepare(
+      `SELECT u.id, u.first_name, u.last_name, u.phone, u.country_code, w.balance, w.currency
+       FROM users u
+       JOIN wallets w ON w.user_id = u.id
+       ORDER BY u.first_name ASC`
+    )
+    .all();
+
+  res.json({
+    users: users.map((u) => ({
+      id: u.id,
+      firstName: u.first_name,
+      lastName: u.last_name,
+      phone: u.phone,
+      countryCode: u.country_code,
+      balance: u.balance,
+      currency: u.currency,
+    })),
+  });
+});
+
+// GET /api/wallet/find-user?phone=... -> Trouver un compte par téléphone
+router.get("/find-user", (req, res) => {
+  const phone = (req.query.phone || "").trim().replace(/\s/g, "").replace(/^\+227/, "");
+
+  if (!phone) {
+    return res.status(400).json({ error: "Numéro de téléphone requis." });
+  }
+
+  const user = db.prepare("SELECT * FROM users WHERE phone = ? OR phone = ?").get(phone, `+227${phone}`);
+  if (!user) {
+    return res.json({ found: false, message: "Aucun compte My Nita trouvé avec ce numéro." });
+  }
+
+  const wallet = db.prepare("SELECT * FROM wallets WHERE user_id = ?").get(user.id);
+
+  res.json({
+    found: true,
+    user: {
+      id: user.id,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      phone: user.phone,
+      countryCode: user.country_code,
+      balance: wallet ? wallet.balance : 0,
+      currency: wallet ? wallet.currency : "CFA",
+    },
+  });
+});
+
 module.exports = router;

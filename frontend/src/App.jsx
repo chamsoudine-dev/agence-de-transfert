@@ -7,6 +7,8 @@ import SendMoney from "./pages/SendMoney.jsx";
 import TransferAccount from "./pages/TransferAccount.jsx";
 import History from "./pages/History.jsx";
 import Placeholder from "./pages/Placeholder.jsx";
+import Recharge from "./pages/Recharge.jsx";
+import RechargeClient from "./pages/RechargeClient.jsx";
 
 function Private({ children }) {
   const { token } = useAuth();
@@ -49,6 +51,22 @@ export default function App() {
           element={
             <Private>
               <History />
+            </Private>
+          }
+        />
+        <Route
+          path="/recharger"
+          element={
+            <Private>
+              <Recharge />
+            </Private>
+          }
+        />
+        <Route
+          path="/recharger-client"
+          element={
+            <Private>
+              <RechargeClient />
             </Private>
           }
         />

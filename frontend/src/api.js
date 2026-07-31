@@ -18,6 +18,7 @@ async function request(path, { method = "GET", body, token } = {}) {
 }
 
 export const api = {
+  request,
   register: (payload) => request("/auth/register", { method: "POST", body: payload }),
   login: (payload) => request("/auth/login", { method: "POST", body: payload }),
   getWallet: (token) => request("/wallet/me", { token }),
@@ -27,4 +28,8 @@ export const api = {
   accountTransfer: (token, payload) =>
     request("/transactions/account-transfer", { method: "POST", body: payload, token }),
   getHistory: (token) => request("/transactions", { token }),
+  getUsers: (token) => request("/wallet/users", { token }),
+  findUserByPhone: (token, phone) => request(`/wallet/find-user?phone=${encodeURIComponent(phone)}`, { token }),
+  rechargeClient: (token, payload) => request("/transactions/recharge-client", { method: "POST", body: payload, token }),
+  deleteTransaction: (token, id) => request(`/transactions/${id}`, { method: "DELETE", token }),
 };
