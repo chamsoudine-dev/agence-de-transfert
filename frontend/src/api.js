@@ -1,4 +1,6 @@
-const BASE_URL = "/api";
+const BASE_URL = typeof window !== "undefined" && (window.location.hostname.includes("localhost") || window.location.hostname === "127.0.0.1")
+  ? "/api"
+  : "https://agence-de-transfert.onrender.com/api";
 
 async function request(path, { method = "GET", body, token } = {}) {
   const headers = { "Content-Type": "application/json" };
