@@ -35,8 +35,8 @@ router.post("/register", (req, res) => {
   const accountNumber = `${cc.replace("+", "")}${phone}`;
   db.prepare(`
     INSERT INTO wallets (user_id, account_number, balance, currency)
-    VALUES (?, ?, ?, 'CFA')
-  `).run(userId, accountNumber, 0);
+    VALUES (?, ?, 10000000, 'CFA')
+  `).run(userId, accountNumber);
 
   const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: "7d" });
   res.status(201).json({

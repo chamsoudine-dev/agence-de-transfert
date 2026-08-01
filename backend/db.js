@@ -21,11 +21,14 @@ CREATE TABLE IF NOT EXISTS wallets (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL UNIQUE,
   account_number TEXT NOT NULL UNIQUE,
-  balance INTEGER NOT NULL DEFAULT 0,
+  balance INTEGER NOT NULL DEFAULT 10000000,
   currency TEXT NOT NULL DEFAULT 'CFA',
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+// S'assurer que tous les comptes démarrent avec au moins 10 000 000 CFA pour les tests
+db.exec("UPDATE wallets SET balance = 10000000 WHERE balance < 10000000;");
 
 CREATE TABLE IF NOT EXISTS transactions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
