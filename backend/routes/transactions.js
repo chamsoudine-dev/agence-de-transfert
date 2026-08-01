@@ -34,8 +34,8 @@ router.post("/send", (req, res) => {
     return res.status(400).json({ error: "Solde insuffisant." });
   }
 
-  // Le destinataire est-il déjà un utilisateur Ricardo ?
-  const receiverUser = db.prepare("SELECT * FROM users WHERE phone = ?").get(phone);
+  const cleanPhone = phone.trim().replace(/\s/g, "").replace(/^\+227/, "");
+  const receiverUser = db.prepare("SELECT * FROM users WHERE phone = ? OR phone = ? OR phone = ?").get(phone, cleanPhone, `+227${cleanPhone}`);
   const receiverWallet = receiverUser ? getWalletByUser(receiverUser.id) : null;
 
   const tx = db.transaction(() => {
@@ -92,7 +92,8 @@ router.post("/account-transfer", (req, res) => {
   }
 
   const senderWallet = getWalletByUser(req.userId);
-  const receiverUser = db.prepare("SELECT * FROM users WHERE phone = ?").get(phone);
+  const cleanPhone = phone.trim().replace(/\s/g, "").replace(/^\+227/, "");
+  const receiverUser = db.prepare("SELECT * FROM users WHERE phone = ? OR phone = ? OR phone = ?").get(phone, cleanPhone, `+227${cleanPhone}`);
 
   if (!receiverUser) {
     return res.status(404).json({ error: "Ce numéro n'est pas encore inscrit sur Ricardo." });

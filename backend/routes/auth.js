@@ -18,7 +18,10 @@ router.post("/register", (req, res) => {
   }
 
   const cc = countryCode || "+227";
-  const existing = db.prepare("SELECT id FROM users WHERE phone = ?").get(phone);
+  const cleanPhone = phone.trim().replace(/\s/g, "").replace(/^\+227/, "");
+  const fullPhone = `${cc}${cleanPhone}`;
+
+  const existing = db.prepare("SELECT id FROM users WHERE phone = ? OR phone = ? OR phone = ?").get(phone, cleanPhone, fullPhone);
   if (existing) {
     return res.status(409).json({ error: "Ce numéro de téléphone est déjà utilisé." });
   }
@@ -29,10 +32,10 @@ router.post("/register", (req, res) => {
     INSERT INTO users (first_name, last_name, country_code, phone, password_hash)
     VALUES (?, ?, ?, ?, ?)
   `);
-  const result = insertUser.run(firstName, lastName, cc, phone, passwordHash);
+  const result = insertUser.run(firstName, lastName, cc, cleanPhone, passwordHash);
   const userId = result.lastInsertRowid;
 
-  const accountNumber = `${cc.replace("+", "")}${phone}`;
+  const accountNumber = `${cc.replace("+", "")}${cleanPhone}`;
   db.prepare(`
     INSERT INTO wallets (user_id, account_number, balance, currency)
     VALUES (?, ?, 10000000, 'CFA')
@@ -41,7 +44,7 @@ router.post("/register", (req, res) => {
   const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: "7d" });
   res.status(201).json({
     token,
-    user: { id: userId, firstName, lastName, phone, countryCode: cc },
+    user: { id: userId, firstName, lastName, phone: cleanPhone, countryCode: cc },
   });
 });
 
@@ -52,7 +55,8 @@ router.post("/login", (req, res) => {
     return res.status(400).json({ error: "Téléphone et mot de passe requis." });
   }
 
-  const user = db.prepare("SELECT * FROM users WHERE phone = ?").get(phone);
+  const cleanPhone = phone.trim().replace(/\s/g, "").replace(/^\+227/, "");
+  const user = db.prepare("SELECT * FROM users WHERE phone = ? OR phone = ? OR phone = ?").get(phone, cleanPhone, `+227${cleanPhone}`);
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
     return res.status(401).json({ error: "Numéro ou mot de passe incorrect." });
   }
