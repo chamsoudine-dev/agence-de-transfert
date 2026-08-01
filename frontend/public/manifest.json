@@ -1,0 +1,22 @@
+{
+  "short_name": "My Nita",
+  "name": "My Nita - Transfert d'Argent & Recharge Client",
+  "description": "Application de transfert d'argent compte à compte et de rechargement instantané My Nita",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./",
+  "background_color": "#FFFFFF",
+  "theme_color": "#E64A19",
+  "display": "standalone",
+  "orientation": "portrait"
+}
