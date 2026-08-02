@@ -27,9 +27,6 @@ CREATE TABLE IF NOT EXISTS wallets (
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-// S'assurer que tous les comptes démarrent avec au moins 10 000 000 CFA pour les tests
-db.exec("UPDATE wallets SET balance = 10000000 WHERE balance < 10000000;");
-
 CREATE TABLE IF NOT EXISTS transactions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   sender_wallet_id INTEGER,
@@ -56,5 +53,8 @@ CREATE TABLE IF NOT EXISTS favorites (
   FOREIGN KEY (owner_user_id) REFERENCES users(id)
 );
 `);
+
+// S'assurer que tous les comptes démarrent avec au moins 10 000 000 CFA pour les tests
+db.exec("UPDATE wallets SET balance = 10000000 WHERE balance < 10000000;");
 
 module.exports = db;

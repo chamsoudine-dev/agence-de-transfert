@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import Logo from "../components/Logo.jsx";
+import { api } from "../api.js";
 
 /**
  * Page de connexion — design fidèle à MyNita
@@ -15,15 +16,73 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+
+  // --- Modal Mot de passe oublié ---
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetPhone, setResetPhone] = useState("");
+  const [resetNewPassword, setResetNewPassword] = useState("");
+  const [resetConfirmPassword, setResetConfirmPassword] = useState("");
+  const [showResetPwd, setShowResetPwd] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState("");
+  const [resetSuccess, setResetSuccess] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccessMsg("");
     try {
       await login(phone, password);
       navigate("/");
     } catch (err) {
       setError(err.message);
+    }
+  };
+
+  const openResetModal = () => {
+    setResetPhone(phone);
+    setResetNewPassword("");
+    setResetConfirmPassword("");
+    setResetError("");
+    setResetSuccess("");
+    setShowResetModal(true);
+  };
+
+  const handleResetSubmit = async (e) => {
+    e.preventDefault();
+    setResetError("");
+    setResetSuccess("");
+
+    if (!resetPhone.trim()) {
+      setResetError("Veuillez saisir votre numéro de téléphone.");
+      return;
+    }
+    if (resetNewPassword.length < 4) {
+      setResetError("Le nouveau mot de passe doit contenir au moins 4 caractères.");
+      return;
+    }
+    if (resetNewPassword !== resetConfirmPassword) {
+      setResetError("Les deux mots de passe ne correspondent pas.");
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const res = await api.resetPassword({ phone: resetPhone, newPassword: resetNewPassword });
+      setResetSuccess(res.message || "Mot de passe réinitialisé avec succès !");
+      // Pré-remplir les champs de connexion
+      setPhone(resetPhone);
+      setPassword(resetNewPassword);
+      setSuccessMsg("Mot de passe modifié ! Cliquez sur Se connecter.");
+      setTimeout(() => {
+        setShowResetModal(false);
+        setResetSuccess("");
+      }, 1800);
+    } catch (err) {
+      setResetError(err.message);
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -39,12 +98,14 @@ export default function Login() {
       <div className="flex justify-between items-center mb-4">
         <button
           id="btn-aide"
+          type="button"
           className="bg-white/90 text-ricardo-blue text-sm font-semibold px-4 py-2 rounded-full shadow-sm"
         >
           Aide ?
         </button>
         <button
           id="btn-service-client"
+          type="button"
           className="bg-ricardo-red text-white text-sm font-semibold px-4 py-2 rounded-full flex items-center gap-2 shadow-md"
         >
           <PhoneIcon />
@@ -67,10 +128,10 @@ export default function Login() {
             <input
               id="input-phone"
               type="tel"
-              placeholder="Numéro de téléphone"
+              placeholder="N° de téléphone"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="flex-1 text-ricardo-blue font-semibold placeholder:text-gray-300 bg-transparent text-base ml-1"
+              className="flex-1 text-ricardo-blue font-semibold placeholder:text-gray-300 bg-transparent text-base ml-1 outline-none"
               required
             />
           </div>
@@ -84,7 +145,7 @@ export default function Login() {
               placeholder="Mot de passe"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="flex-1 text-gray-600 placeholder:text-gray-300 bg-transparent text-base"
+              className="flex-1 text-gray-600 placeholder:text-gray-300 bg-transparent text-base outline-none"
               required
             />
             <button type="button" onClick={() => setShowPassword((s) => !s)}>
@@ -92,18 +153,28 @@ export default function Login() {
             </button>
           </div>
 
-          {/* Erreur */}
+          {/* Message d'erreur */}
           {error && (
             <p className="text-white bg-ricardo-red/90 rounded-xl px-3 py-2 text-sm text-center">
               {error}
             </p>
           )}
+          {/* Message de succès (après reset mdp) */}
+          {successMsg && (
+            <p className="text-white bg-emerald-600/90 rounded-xl px-3 py-2 text-sm text-center font-medium">
+              {successMsg}
+            </p>
+          )}
 
-          {/* Mot de passe oublié */}
+          {/* Mot de passe oublié — lien fonctionnel */}
           <div className="text-right -mt-1">
-            <a href="#" className="text-gray-600 text-sm underline underline-offset-2">
+            <button
+              type="button"
+              onClick={openResetModal}
+              className="text-gray-600 text-sm underline underline-offset-2 hover:text-ricardo-blue transition-colors"
+            >
               Mot de passe oublié ?
-            </a>
+            </button>
           </div>
 
           {/* Bouton Se connecter */}
@@ -120,6 +191,7 @@ export default function Login() {
         {/* Bouton Face ID */}
         <button
           id="btn-faceid"
+          type="button"
           className="w-14 h-14 rounded-full bg-ricardo-red flex items-center justify-center shadow-lg active:scale-95 transition-transform"
         >
           <FaceIdIcon />
@@ -135,9 +207,110 @@ export default function Login() {
 
         {/* Version */}
         <p className="text-center text-ricardo-red text-xs font-medium">
-          Version : 1.0.0
+          Version : 3.3.0
         </p>
       </div>
+
+      {/* ─── Modal Mot de passe oublié ─── */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-4">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl flex flex-col gap-4">
+            {/* En-tête */}
+            <div className="flex justify-between items-center border-b pb-3">
+              <h3 className="text-xl font-bold text-ricardo-blue flex items-center gap-2">
+                <LockIcon /> Réinitialiser le mot de passe
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowResetModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none"
+              >
+                &times;
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-500">
+              Saisissez votre numéro de téléphone et choisissez un nouveau mot de passe.
+            </p>
+
+            <form onSubmit={handleResetSubmit} className="flex flex-col gap-3">
+              {/* Numéro de téléphone */}
+              <div className="bg-gray-50 border border-gray-200 rounded-2xl flex items-center px-4 py-3 gap-2">
+                <span className="text-lg">🇳🇪</span>
+                <span className="text-ricardo-blue font-semibold text-sm">+227</span>
+                <input
+                  type="tel"
+                  placeholder="Numéro de téléphone"
+                  value={resetPhone}
+                  onChange={(e) => setResetPhone(e.target.value)}
+                  className="flex-1 font-semibold text-ricardo-blue bg-transparent text-base outline-none"
+                  required
+                />
+              </div>
+
+              {/* Nouveau mot de passe */}
+              <div className="bg-gray-50 border border-gray-200 rounded-2xl flex items-center px-4 py-3 gap-2">
+                <LockIcon />
+                <input
+                  type={showResetPwd ? "text" : "password"}
+                  placeholder="Nouveau mot de passe"
+                  value={resetNewPassword}
+                  onChange={(e) => setResetNewPassword(e.target.value)}
+                  className="flex-1 text-gray-700 bg-transparent text-base outline-none"
+                  required
+                />
+                <button type="button" onClick={() => setShowResetPwd((s) => !s)}>
+                  {showResetPwd ? <EyeOffIcon /> : <EyeIcon />}
+                </button>
+              </div>
+
+              {/* Confirmer mot de passe */}
+              <div className="bg-gray-50 border border-gray-200 rounded-2xl flex items-center px-4 py-3 gap-2">
+                <LockIcon />
+                <input
+                  type={showResetPwd ? "text" : "password"}
+                  placeholder="Confirmer le nouveau mot de passe"
+                  value={resetConfirmPassword}
+                  onChange={(e) => setResetConfirmPassword(e.target.value)}
+                  className="flex-1 text-gray-700 bg-transparent text-base outline-none"
+                  required
+                />
+              </div>
+
+              {/* Erreur */}
+              {resetError && (
+                <div className="bg-rose-50 text-rose-700 border border-rose-200 rounded-xl px-3 py-2 text-sm text-center font-medium">
+                  {resetError}
+                </div>
+              )}
+              {/* Succès */}
+              {resetSuccess && (
+                <div className="bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl px-3 py-2 text-sm text-center font-medium">
+                  {resetSuccess}
+                </div>
+              )}
+
+              {/* Boutons */}
+              <div className="flex gap-3 mt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowResetModal(false)}
+                  className="flex-1 py-3 border border-gray-300 text-gray-700 font-semibold rounded-2xl hover:bg-gray-50 transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={resetLoading}
+                  className="flex-1 py-3 bg-ricardo-blue text-white font-bold rounded-2xl shadow-md disabled:opacity-60 hover:bg-ricardo-blue/90 transition-colors"
+                >
+                  {resetLoading ? "Modification..." : "Valider"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

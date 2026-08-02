@@ -74,4 +74,28 @@ router.post("/login", (req, res) => {
   });
 });
 
+// POST /api/auth/reset-password
+router.post("/reset-password", (req, res) => {
+  const { phone, newPassword } = req.body;
+  if (!phone || !newPassword) {
+    return res.status(400).json({ error: "Téléphone et nouveau mot de passe requis." });
+  }
+  if (newPassword.length < 4) {
+    return res.status(400).json({ error: "Le mot de passe doit contenir au moins 4 caractères." });
+  }
+
+  const cleanPhone = phone.trim().replace(/\s/g, "").replace(/^\+227/, "");
+  const user = db.prepare("SELECT * FROM users WHERE phone = ? OR phone = ? OR phone = ?")
+    .get(phone, cleanPhone, `+227${cleanPhone}`);
+
+  if (!user) {
+    return res.status(404).json({ error: "Aucun compte trouvé avec ce numéro de téléphone." });
+  }
+
+  const passwordHash = bcrypt.hashSync(newPassword, 10);
+  db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(passwordHash, user.id);
+
+  res.json({ message: "Mot de passe réinitialisé avec succès." });
+});
+
 module.exports = router;

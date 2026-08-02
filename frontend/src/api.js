@@ -34,4 +34,5 @@ export const api = {
   findUserByPhone: (token, phone) => request(`/wallet/find-user?phone=${encodeURIComponent(phone)}`, { token }),
   rechargeClient: (token, payload) => request("/transactions/recharge-client", { method: "POST", body: payload, token }),
   deleteTransaction: (token, id) => request(`/transactions/${id}`, { method: "DELETE", token }),
+  resetPassword: (payload) => request("/auth/reset-password", { method: "POST", body: payload }),
 };
